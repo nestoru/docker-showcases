@@ -4,7 +4,7 @@ This is my journey with docker, unleashed. Besides the official documentation th
 ## What is docker?
 It is a project that provides tools on top of Linux containers (LXC) to allow packaging of application environments in file images which can be run quickly in any host as a container. Images can be built my executing ad-hoc commands or by running them from inside a special file called 'dockerfile' using special docker commands although the RUN command literally allows to use any Plain Old Bash (POB) command.
 
-## docker ubuntu quick start
+## Quick start with docker on Ubuntu
 * let us install docker (these are plain old bash (POB) commands so a simple recipe to install it remotely in any machine should be piece of cake.
 ` curl -sSL https://get.docker.com/ | sh 
 * add current user to docker group:
