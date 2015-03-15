@@ -144,8 +144,8 @@ CMD ["apache2", "-D", "FOREGROUND"]
 $ docker stop regproxy dockreg #stop the containers in case they are running
 $ docker rm -f regproxy dockreg #remove regproxy and dockreg containers in case they exist
 $ docker build -t regproxy . #build the image, name it regproxy. The image id is provided upon completion
-$ docker run -v /var/docker-registry:/tmp/registry -v ~/workspace/docker/images/registry/proxy/registry-htpasswd:/etc/apache2/htpasswd/registry-htpasswd -d --name=dockreg --restart=always registry #run the registry container without exposing the insecure port, pointing to the mounted local docker-registry directory, pointing to a local htpasswd file (to allow adding new users without having to rebuild the image) and making sure it restarts after reboot or if it crashes
-$ docker run -p 443:443 -d --name=regproxy --restart=always --link dockreg:DOCKREG regproxy #run the proxy exposing the secure port, linking it to the registry container and making sure it starts after reboot or if it crashes
+$ docker run -v /var/docker-registry:/tmp/registry -d --name=dockreg --restart=always registry #run the registry container without exposing the insecure port, pointing to the mounted local docker-registry directory and making sure it restarts after reboot or if it crashes
+$ docker run -v ~/workspace/docker/images/registry/proxy/registry-htpasswd:/etc/apache2/htpasswd/registry-htpasswd -p 443:443 -d --name=regproxy --restart=always --link dockreg:DOCKREG regproxy #run the proxy pointing to a local htpasswd file (to allow adding new users without having to rebuild the image) , exposing the secure port, linking it to the registry container and making sure it starts after reboot or if it crashes
 
 $ # Hit https://dockreg.sample.com:8443/ from a browser. It should ask for your credentials and take you to a secure registry welcome message
 
