@@ -62,7 +62,7 @@ $ svn add images/registry/proxy
 $ svn ci -m "docker registry project first commit"
 $ cd images/registry/proxy
 $ echo ".svn" > .dockerignore #Add to this file anything not needed by the docker image
-$ htpasswd registry-htpasswd ${username} #add authentication for username to htpasswd file
+$ htpasswd ~/workspace/docker/images/registry/proxy/registry-htpasswd ${username} #add authentication for username to htpasswd file
 
 $ #create self signed key, cert and intermediate CA files with validity 10 years (better to buy the cert!)
 $ export domain=dockreg.sample.com
