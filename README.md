@@ -1,11 +1,14 @@
 # docker-showcases
-This is my journey with docker, unleashed. Besides the official documentation there are two links that I found useful in learning the bit that I know today abouyt docker: https://github.com/wsargent/docker-cheat-sheet and https://docs.docker.com/articles/dockerfile_best-practices/.
+This is my journey with docker, unleashed. Besides the official documentation there are two links that I found useful in learning the bit that I know today about docker: https://github.com/wsargent/docker-cheat-sheet and https://docs.docker.com/articles/dockerfile_best-practices/.
 
 ## What is docker?
-It is a project that provides tools on top of Linux containers (LXC) to allow packaging of application environments in file images which can be run quickly in any host as a container. Images can be built my executing ad-hoc commands or by running them from inside a special file called 'dockerfile' using special docker commands although the RUN command literally allows to use any Plain Old Bash (POB) command.
+It is a project that provides tools on top of Linux containers (LXC) to allow packaging of services in file images, storing them in repositories and running them as isolated containers in any host. Images can be built by executing ad-hoc commands or by running special docker commands from inside a special file called 'Dockerfile'. The RUN command allows to use any Plain Old Bash (POB) command.
+
+## What should we care?
+Images are a fraction of what a whole OS is so keeping services configuration is lighter than relying on storing a whole VM.
 
 ## Quick start with docker on Ubuntu
-* let us install docker (these are plain old bash (POB) commands so a simple recipe to install it remotely in any machine should be piece of cake.
+* let us install docker (these are plain old bash (POB) commands so a simple recipe to install it remotely in any machine should be easy and fast to build.
 
 ```
 $ curl -sSL https://get.docker.com/ | sh 
@@ -13,30 +16,30 @@ $ curl -sSL https://get.docker.com/ | sh
 $ #add current user to docker group:
 $ sudo usermod -aG docker `logname`
 
-$ #Login to the docker group 
+$ #Login to the docker group:
 $ newgrp docker
 
-$ #Restart docker
+$ #Restart docker service:
 $ sudo service docker restart
 
 $ #Look at the logs for any isues:
 $ tail -100 /var/log/upstart/docker.log
 
-$ #try docker by pulling an ubuntu image and running it in a container, then running the command 'hostname' in it to see as the response the default name of the image.
+$ #try docker by pulling an ubuntu image and running it in a container, then running the command 'hostname' in it to see as the response the default name of the image:
 $ docker run ubuntu hostname
 ```
 
 ## Showcase #1: Running your private secure registry
-Now that we have docker running let us buid a custom useful image and use it. 
+Now that we have docker running let us buid a custom useful image and use it. This is your first step anyway after installing docker unless you are OK with storing your images in public or third parties' SaS.
 
-To host a secure docker registry you can use the docker-registry image as is but you also need a reverse proxy like apache with mod_proxy. In this showcase will build 'regproxy', an image containing apache service which is configured to reverse proxy requests to a docker-registry service. Both service will be dockerized. The regproxy image will be stored in the registry itself.
+To host a secure docker registry you can use the docker-registry image as is but you also need a reverse proxy like apache with mod_proxy. In this showcase we will build 'regproxy', an image containing apache service which is configured to reverse proxy requests to a docker-registry service. Both services (registry and proxy) will be dockerized. The regproxy image will be stored in the registry itself.
 
 ### Building the images
 ```
 $ #ssh into the host that would host the registry:
 $ ssh dockreg.sample.com 
 
-$ #run the basic registry image in a container named docreg mapping port 5000 from container to port 5000 in host
+$ #run the basic registry image in a container named dockreg mapping port 5000 from container to port 5000 in host
 $ docker run -p 5000:5000 -d --name=dockreg registry
 
 $ #test that your container is running the registry:
@@ -45,9 +48,9 @@ $ curl http://localhost:5000
 $ #stop the container and remove the image
 $ docker rm -f dockreg
 
-$ #This registry image has two problems. First by default when it runs the container will store the tagged images locally which is not good as it will not persist. Second as you can see is publicly available in a non secure endpoint (http). We will correct that. While doing so we will learn a little bit more about docker. We will build a dockerfile to create the regproxy image and store it in the source control (assuming a subversion base path has already been created), that way we can recreate from scratch the image if needed.
+$ #This registry image has two problems. First by default when it runs the container will store the tagged images locally which is not good (docker images must be lightweight so do not store data internally). Second as you can see is available in a non secure endpoint (http). We will correct that. While doing so we will learn a little bit more about docker. We will build a dockerfile to create the regproxy image and store it in the source control (assuming a subversion base path has already been created), that way we can recreate from scratch the image if needed. Note that docker does not eliminate the need to backup your data which is externally hosted as I mentioned.
 $ sudo apt-get install -y subversion tree apache2-utils #some needed dependencies for this exercise
-$ sudo mkdir /var/docker-registry #to store data and db
+$ sudo mkdir /var/docker-registry #to store registry data (images and repos))
 $ sudo chown `logname`:`logname` /var/docker-registry
 $ mkdir -p ~/workspace
 $ cd workspace/
@@ -60,9 +63,9 @@ $ svn ci -m "docker registry project first commit"
 $ cd images/registry/proxy
 $ echo ".svn" > .dockerignore #Add to this file anything not needed by the docker image
 $ htpasswd registry-htpasswd ${username} #add authentication for username to htpasswd file
+
 $ #create self signed key, cert and intermediate CA files with validity 10 years (better to buy the cert!)
 $ export domain=dockreg.sample.com
-$ openssl req -x509 -new -nodes -key devdockerCA.key -days 3650 -out devdockerCA.crt
 $ openssl genrsa -out ${domain}CA.key 2048
 $ openssl req -x509 -new -nodes -key ${domain}CA.key -days 3650 -out ${domain}CA.crt
 $ openssl genrsa -out ${domain}.key 2048
@@ -71,7 +74,7 @@ $ openssl x509 -req -in ${domain}.csr -CA ${domain}CA.crt -CAkey ${domain}CA.key
 
 $ #copy the CA cert locally (needs to be done in all hosts that want to access this registry. To avoid this buy the cert instead!). Note that the recommended official docker hack won't work --> sudo cp dockreg.sample.comCA.crt /etc/docker/certs.d/dockreg.sample.com/ca.crt
 $ sudo mkdir /usr/local/share/ca-certificates/${domain}
-$ sudo cp ${domain}CA.crt /usr/local/share/ca-certificates/dockreg.sample.com/
+$ sudo cp ${domain}CA.crt /usr/local/share/ca-certificates/${domain}/
 $ sudo update-ca-certificates
 $ cat ssl-proxy.conf #create virtual host apache configuration pointing to above created files 
 <VirtualHost *:443>
@@ -141,20 +144,23 @@ CMD ["apache2", "-D", "FOREGROUND"]
 $ docker stop regproxy dockreg #stop the containers in case they are running
 $ docker rm -f regproxy dockreg #remove regproxy and dockreg containers in case they exist
 $ docker build -t regproxy . #build the image, name it regproxy. The image id is provided upon completion
-$ docker run -v /var/docker-registry:/tmp/registry -d --name=dockreg --restart=always registry #run the registry container without exposing the insecure port, pointing to the mounted local docker-registry directory and make sure it restarts after reboot or if it crashes
-$ docker run -p 443:443 -d --name=regproxy --restart=always --link dockreg:DOCKREG regproxy #run the proxy exposing the secure port, linking it to the registry container and make sure it starts after reboot or if it crashes
+$ docker run -v /var/docker-registry:/tmp/registry -d --name=dockreg --restart=always registry #run the registry container without exposing the insecure port, pointing to the mounted local docker-registry directory and making sure it restarts after reboot or if it crashes
+$ docker run -p 443:443 -d --name=regproxy --restart=always --link dockreg:DOCKREG regproxy #run the proxy exposing the secure port, linking it to the registry container and making sure it starts after reboot or if it crashes
 
-$ # Hit https://dockreg.sample.com:8443/ from a browser. It should ask for your credentials and take you to your secured registry welcome message
+$ # Hit https://dockreg.sample.com:8443/ from a browser. It should ask for your credentials and take you to a secure registry welcome message
+
+$ #Troubleshooting:
 $ docker logs proxy #In case of failure find out if the proxy run successfully. If not then remove,fix,build and run again.
 $ docker ps #to confirm the image is running and get its container id
 $ docker ps -a #to see all running and stopped instances including status
 $ docker exec <container name or id> ls -alrt  /var/log/apache2/ #to see last logs from running container
+
+$ #Wrap up:
 $ docker tag -f <image name or id> dockreg.sample.com/regproxy:latest #If everything went fine it is time to tag the images and repositories directories
 $ docker login https://dockreg.sample.com #you should be able to login. If you are not you missed something above
 $ docker push  dockreg.sample.com/regproxy:latest #This will take a while as you are uploading your image to the secure registry
-
-$ #access https://dockreg.sample.com/v1/search?q= from a browser and you should see your image listed there. Look into  /var/docker-registry/ in the host to confirm the data is there. Wwe want to make sure everything will work after a restart so run 'sudo reboot'
-$ docker ps #must show the two containers running and the registry should still respond that is hosting regproxy image
+$ #access https://dockreg.sample.com/v1/search?q= from a browser and you should see your image listed there. Look into  /var/docker-registry/ in the host to confirm the data is there. We want to make sure everything will work after a restart so run 'sudo reboot'
+$ docker ps #must show the two containers running and the registry url should still respond that is hosting regproxy image
 $ tree ~/workspace/docker #This is the status of the docker projects so far which includes just building an internal secure registry
 ~/workspace/docker
 └── images
