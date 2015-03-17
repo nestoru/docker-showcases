@@ -8,26 +8,7 @@ It is a project that provides tools on top of Linux containers (LXC) to allow pa
 Images are a fraction of what a whole OS is so keeping services configuration is lighter than relying on storing a whole VM.
 
 ## Quick start with docker on Ubuntu
-* let us install docker (these are plain old bash (POB) commands so a simple recipe to install it remotely in any machine should be easy and fast to build.
-
-```
-$ curl -sSL https://get.docker.com/ | sh 
-
-$ #add current user to docker group:
-$ sudo usermod -aG docker `logname`
-
-$ #Login to the docker group:
-$ newgrp docker
-
-$ #Restart docker service:
-$ sudo service docker restart
-
-$ #Look at the logs for any isues:
-$ tail -100 /var/log/upstart/docker.log
-
-$ #try docker by pulling an ubuntu image and running it in a container, then running the command 'hostname' in it to see as the response the default name of the image:
-$ docker run ubuntu hostname
-```
+[See docker-install.md](docs/docker-install.md)
 
 ## Showcase #1: Running your private secure registry
 Now that we have docker running let us buid a custom useful image and use it. This is your first step anyway after installing docker unless you are OK with storing your images in public or third parties' SaS.
