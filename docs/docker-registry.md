@@ -1,3 +1,4 @@
+#Building a secure internal docker registry
 Now that we have docker running let us buid a custom useful image and use it. This is your first step anyway after installing docker unless you are OK with storing your images in public or third parties' SaS.
 
 To host a secure docker registry you can use the docker-registry image as is but you also need a reverse proxy like apache with mod_proxy. In this showcase we will build 'regproxy', an image containing apache service which is configured to reverse proxy requests to a docker-registry service. Both services (registry and proxy) will be dockerized. The regproxy image will be stored in the registry itself.
