@@ -14,7 +14,7 @@ $ #Restart docker service:
 $ sudo service docker restart
 
 $ #Look at the logs for any isues:
-$ tail -100 /var/log/upstart/docker.log
+$ sudo tail -100 /var/log/upstart/docker.log
 
 $ #try docker by pulling an ubuntu image and running it in a container, then running the command 'hostname' in it to see as the response the default name of the image:
 $ docker run ubuntu hostname
