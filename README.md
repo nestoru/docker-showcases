@@ -11,6 +11,8 @@ Images are a fraction of what a whole OS is so keeping services configuration is
 
 ## [Showcase #1: Running your private secure registry](docs/docker-registry.md)
 
+## [Showcase #2: Install mediawiki 1.25](https://gist.github.com/nestoru/2859b211d14d80f8a931#file-dockerized-mediawiki-1-25-upgrade)
+
 
 
 
