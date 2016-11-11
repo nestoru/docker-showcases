@@ -5,7 +5,7 @@ At the time of this writting the original script is asking for unnecessary manua
 $ curl -sSL https://get.docker.com/ | sh 
 
 $ #add current user to docker group:
-$ sudo usermod -aG docker `logname`
+$ sudo usermod -aG docker $USER
 
 $ #Login to the docker group:
 $ newgrp docker
